@@ -1,6 +1,10 @@
 const { generateMemberID } = require("../middleware/idGenerator");
 const { updateSection } = require("../middleware/levelsManager");
-const { buildNode } = require("../middleware/nodeTreeGenerator");
+const {
+  buildNode,
+  sponserBuildNode,
+  downlineBuildNode,
+} = require("../middleware/nodeTreeGenerator");
 const Agent = require("../models/agents");
 
 //create
@@ -33,6 +37,14 @@ const createAgent = async (req, res) => {
       applicantPlacementLevel,
       joiningFee,
     } = req.body;
+
+    const phone = await Agent.findOne({ phoneNumber });
+
+    if (phone) {
+      return res
+        .status(400)
+        .json({ message: "Mobile number already registered" });
+    }
 
     // Check if parentMemberId is provided
     if (!sponsorId) {
@@ -219,6 +231,27 @@ const findSponser = async (req, res) => {
   }
 };
 
+// check phone number
+
+const checkMobile = async (req, res) => {
+  const phoneNumber = req.params.phoneNumber;
+
+  try {
+    const phone = await Agent.findOne({ phoneNumber });
+
+    if (phone) {
+      return res
+        .status(404)
+        .json({ error: "A member is already registered with this number" });
+    }
+
+    res.status(200).json("Good");
+  } catch (error) {
+    console.error("Error finding member:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 // for updating status
 const updateStatus = async (req, res) => {
   const { id } = req.params;
@@ -263,14 +296,24 @@ const buildTreeData = async (req, res) => {
   }
 };
 
-// get downlineMember for selected sectetion
+// get sponsors for selected sectetion
 
-const getDownlineMember = async (req, res) => {
+const getSponsorMember = async (req, res) => {
   try {
     const { treeName } = req.params;
-    const { page = 1, limit = 10 } = req.query; // Default values: page 1, limit 10
+    const { page = 1, limit = 10, search = "" } = req.query; // Default values: page 1, limit 10, empty search
 
-    const getMembers = await Agent.find({ treeName, isHead: false })
+    const searchRegex = new RegExp(search, "i"); // Case-insensitive regex for search
+
+    const getMembers = await Agent.find({
+      treeName,
+      isHead: false,
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { sponsorId: { $regex: searchRegex } },
+      ],
+    })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit));
@@ -278,6 +321,72 @@ const getDownlineMember = async (req, res) => {
     const totalMembers = await Agent.countDocuments({
       treeName,
       isHead: false,
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { sponsorId: { $regex: searchRegex } },
+      ],
+    });
+
+    const totalPages = Math.ceil(totalMembers / limit);
+
+    const filterDetails = getMembers.map((member) => ({
+      name: member.name,
+      level: member.applicantPlacementLevel,
+      createdAt: member.createdAt,
+      memberId: member.memberId,
+      sponsorId: member.sponsorId,
+      sponsorName: member.sponsorName,
+      sponsorLevel: member.sponsorPlacementLevel,
+      joiningFee: member.joiningFee,
+      status: member.status,
+      isHead: member.isHead,
+    }));
+
+    res.status(201).json({
+      members: filterDetails,
+      totalPages,
+      currentPage: Number(page),
+      totalMembers,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// get downline for selected sectetion
+
+const getDownlineMember = async (req, res) => {
+  try {
+    const { treeName } = req.params;
+    const { page = 1, limit = 10, search = "" } = req.query; // Default values: page 1, limit 10, empty search
+
+    const searchRegex = new RegExp(search, "i"); // Case-insensitive regex for search
+
+    // Find members with non-empty children array and matching search criteria
+    const getMembers = await Agent.find({
+      treeName,
+      isHead: false,
+      children: { $ne: [] },
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { sponsorId: { $regex: searchRegex } },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const totalMembers = await Agent.countDocuments({
+      treeName,
+      isHead: false,
+      children: { $ne: [] },
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { sponsorId: { $regex: searchRegex } },
+      ],
     });
     const totalPages = Math.ceil(totalMembers / limit);
 
@@ -287,6 +396,7 @@ const getDownlineMember = async (req, res) => {
       createdAt: member.createdAt,
       memberId: member.memberId,
       sponsorId: member.sponsorId,
+      sponsorLevel: member.sponsorPlacementLevel,
       joiningFee: member.joiningFee,
       status: member.status,
       isHead: member.isHead,
@@ -308,17 +418,31 @@ const getDownlineMember = async (req, res) => {
 const getAlltreeMember = async (req, res) => {
   try {
     const { treeName } = req.params;
-    const { page = 1, limit = 10 } = req.query; 
+    const { page = 1, limit = 10, search = "" } = req.query; // Default values: page 1, limit 10, empty search
 
-    const getMembers = await Agent.find({treeName})
+    const searchRegex = new RegExp(search, "i"); // Case-insensitive regex for search
+
+    const getMembers = await Agent.find({
+      treeName,
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { sponsorId: { $regex: searchRegex } },
+      ],
+    })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit));
 
     const totalMembers = await Agent.countDocuments({
       treeName,
-      isHead: false,
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { sponsorId: { $regex: searchRegex } },
+      ],
     });
+
     const totalPages = Math.ceil(totalMembers / limit);
 
     const filterDetails = getMembers.map((member) => ({
@@ -327,6 +451,8 @@ const getAlltreeMember = async (req, res) => {
       createdAt: member.createdAt,
       memberId: member.memberId,
       sponsorId: member.sponsorId,
+      sponsorLevel: member.sponsorPlacementLevel,
+      sponsorName: member.sponsorName,
       joiningFee: member.joiningFee,
       status: member.status,
       isHead: member.isHead,
@@ -343,6 +469,38 @@ const getAlltreeMember = async (req, res) => {
   }
 };
 
+// linked node tree
+const buildSponsorTreeData = async (req, res) => {
+  const memberId = req.params.memberId;
+
+  try {
+    const treeData = await sponserBuildNode(memberId);
+    if (!treeData) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+    res.status(200).json(treeData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// linked node tree
+const buildDownTreeData = async (req, res) => {
+  const memberId = req.params.memberId;
+
+  try {
+    const treeData = await downlineBuildNode(memberId);
+    if (!treeData) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+    res.status(200).json(treeData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   createAgent,
   getAllAgents,
@@ -351,5 +509,9 @@ module.exports = {
   updateStatus,
   buildTreeData,
   getDownlineMember,
-  getAlltreeMember
+  getAlltreeMember,
+  buildSponsorTreeData,
+  getSponsorMember,
+  buildDownTreeData,
+  checkMobile,
 };
