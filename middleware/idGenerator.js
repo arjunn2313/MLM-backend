@@ -22,11 +22,33 @@ const generateHeadId = async (sectionId) => {
 };
 
 // member Id
+// const generateMemberID = async (treeName) => {
+//   try {
+//     const lastRecord = await Agent.findOne({ treeName }).sort({
+//       createdAt: -1,
+//     });
+//     if (lastRecord && lastRecord.memberId) {
+//       const lastMemberId = lastRecord.memberId;
+//       const lastDigit = parseInt(lastMemberId.slice(-1), 10);
+//       const newLastDigit = (lastDigit + 1) % 10;
+//       const newMemberId = lastMemberId.slice(0, -1) + newLastDigit;
+//       return newMemberId;
+//     } else {
+//       // Handle the case where no record is found or memberId is missing
+//       throw new Error("No last record found or memberId is missing");
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     throw new Error("Error generating new memberId");
+//   }
+// };
+
 const generateMemberID = async (treeName) => {
   try {
     const lastRecord = await Agent.findOne({ treeName }).sort({
       createdAt: -1,
     });
+
     if (lastRecord && lastRecord.memberId) {
       const lastMemberId = lastRecord.memberId;
       const lastDigit = parseInt(lastMemberId.slice(-1), 10);
@@ -34,7 +56,6 @@ const generateMemberID = async (treeName) => {
       const newMemberId = lastMemberId.slice(0, -1) + newLastDigit;
       return newMemberId;
     } else {
-      // Handle the case where no record is found or memberId is missing
       throw new Error("No last record found or memberId is missing");
     }
   } catch (error) {

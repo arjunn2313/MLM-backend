@@ -9,6 +9,8 @@ const register = require("./routes/register");
 const district = require("./routes/district");
 const section = require("./routes/tree");
 const agent = require("./routes/agent");
+const payout = require("./routes/payout");
+const settings = require("./routes/settings");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -37,6 +39,8 @@ app.use("/api/member", register);
 app.use("/api/district", district);
 app.use("/api/section", section);
 app.use("/api/agent", agent);
+app.use("/api/pay", payout);
+app.use("/api/settings", settings);
 
 app.listen(6060, () => {
   connect();

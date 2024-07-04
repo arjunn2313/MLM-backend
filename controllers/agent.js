@@ -261,7 +261,10 @@ const updateStatus = async (req, res) => {
   const updateFields = {};
   if (status) updateFields.status = status;
   if (paymentMode) updateFields.paymentMode = paymentMode;
-  if (payment) updateFields.payment = payment;
+  if (payment) {
+    updateFields.payment = payment;
+    updateFields.isPayed = true;
+  }
   console.log(updateFields);
   try {
     const updatedAgent = await Agent.findByIdAndUpdate(

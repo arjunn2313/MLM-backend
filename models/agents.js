@@ -9,6 +9,12 @@ const childSchema = new mongoose.Schema({
   },
 });
 
+const commissionHistorySchema = new mongoose.Schema({
+  amount: { type: Number, required: true },
+  date: { type: Date, default: Date.now },
+  description: { type: String }, // Optional: Add description for the commission payment
+});
+
 const agentSchema = new mongoose.Schema(
   {
     memberId: { type: String, required: true, unique: true },
@@ -40,10 +46,13 @@ const agentSchema = new mongoose.Schema(
     sponsorId: { type: String },
     sponsorName: { type: String },
     sponsorPlacementLevel: { type: Number },
+    placementId: { type: String },
+    placementName: { type: String },
+    placementPlacementLevel: { type: Number },
     applicantPlacementLevel: { type: Number },
     joiningFee: { type: Number, required: true },
-    applicantPhoto: { type: String,  },
-    applicantSign: { type: String,   },
+    applicantPhoto: { type: String },
+    applicantSign: { type: String },
     sponsorSign: { type: String },
     children: [childSchema],
     memberCreatedDate: { type: Date, default: Date.now },
@@ -61,9 +70,12 @@ const agentSchema = new mongoose.Schema(
     },
     paymentMode: {
       type: String,
-      // required: true
     },
     isHead: { type: Boolean, default: false, required: true },
+    isPayed: { type: Boolean, default: false, required: true },
+    referralCommission: { type: Number, default: 0 },
+    walletBalance: { type: Number, default: 0 },
+    commissionHistory: [commissionHistorySchema],
   },
   { timestamps: true }
 );
