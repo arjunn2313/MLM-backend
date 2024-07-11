@@ -164,7 +164,7 @@ const validateOTP = async (req, res) => {
   }
 };
 
-// dd
+// login by password
 const loginReqByPass = async (req, res) => {
   try {
     const { mobileNumber, password } = req.body;
@@ -189,6 +189,7 @@ const loginReqByPass = async (req, res) => {
   }
 };
 
+// login req otp
 const logReqByOtp = async (req, res) => {
   try {
     const { mobileNumber } = req.body;
@@ -214,6 +215,7 @@ const logReqByOtp = async (req, res) => {
   }
 };
 
+// validate otp and login
 const validateAndLogin = async (req, res) => {
   try {
     const { mobileNumber, otp } = req.body;
