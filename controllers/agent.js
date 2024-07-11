@@ -1,136 +1,70 @@
-const { generateMemberID } = require("../middleware/idGenerator");
-const { updateSection } = require("../middleware/levelsManager");
+const {
+  checkPhoneNumberExists,
+  findSponsorAndPlacementMembers,
+  validatePlacementChildrenLimit,
+  createAndSaveAgent,
+  updateSponsorAndPlacementMembers,
+} = require("../services/agentServices");
+const { distributeCommissions } = require("../utils/Calculation");
+const { generateMemberID } = require("../utils/idGenerator");
+const { updateSection } = require("../utils/levelsManager");
 const {
   buildNode,
   sponserBuildNode,
   downlineBuildNode,
-} = require("../middleware/nodeTreeGenerator");
+} = require("../utils/nodeTreeGenerator");
 const Agent = require("../models/agents");
 
 //create
 
 const createAgent = async (req, res) => {
   try {
-    const {
-      name,
-      parentName,
-      relation,
-      phoneNumber,
-      dateOfBirth,
-      gender,
-      maritalStatus,
-      panNumber,
-      accountNumber,
-      ifscCode,
-      bankName,
-      address,
-      city,
-      district,
-      state,
-      country,
-      zipCode,
-      nameOfNominee,
-      relationshipWithNominee,
-      sponsorId,
-      sponsorName,
-      sponsorPlacementLevel,
-      applicantPlacementLevel,
-      joiningFee,
-    } = req.body;
+    const { placementId, sponsorId, phoneNumber, ...details } = req.body;
 
-    const phone = await Agent.findOne({ phoneNumber });
+    await checkPhoneNumberExists(phoneNumber);
 
-    if (phone) {
-      return res
-        .status(400)
-        .json({ message: "Mobile number already registered" });
-    }
+    const { sponsorMember, placedUnderMember } =
+      await findSponsorAndPlacementMembers(sponsorId, placementId);
 
-    // Check if parentMemberId is provided
-    if (!sponsorId) {
-      return res.status(400).json({ message: "Sponsor member ID is required" });
-    }
+    validatePlacementChildrenLimit(placedUnderMember);
 
-    // Find the parent member
-    const parentMember = await Agent.findOne({ memberId: sponsorId });
+    const memberId = await generateMemberID(sponsorMember.treeName);
 
-    if (!parentMember) {
-      return res.status(404).json({ message: "Sponsor member not found" });
-    }
-
-    if (parentMember.children.length >= 5) {
-      return res
-        .status(400)
-        .json({ message: "Sponsor member already has 5 children" });
-    }
-
-    // Generate member ID
-    const memberId = await generateMemberID(parentMember.treeName);
-
-    // Create new registration
-    const newRegistration = new Agent({
+    const newAgent = await createAndSaveAgent(
+      req,
       memberId,
-      treeName: parentMember.treeName,
-      sectionId: parentMember.sectionId,
-      name,
-      parentName,
-      relation,
-      phoneNumber,
-      dateOfBirth,
-      gender,
-      maritalStatus,
-      panNumber,
-      accountNumber,
-      ifscCode,
-      bankName,
-      address,
-      city,
-      district,
-      state,
-      country,
-      zipCode,
-      nameOfNominee,
-      relationshipWithNominee,
+      sponsorMember,
+      placementId,
       sponsorId,
-      sponsorName,
-      sponsorPlacementLevel,
-      applicantPlacementLevel,
-      joiningFee,
-      applicantPhoto: req.files["applicantPhoto"]
-        ? req.files["applicantPhoto"][0].path
-        : null,
-      applicantSign: req.files["applicantSign"]
-        ? req.files["applicantSign"][0].path
-        : null,
-      sponsorSign: req.files["sponsorSign"]
-        ? req.files["sponsorSign"][0].path
-        : null,
-    });
+      details
+    );
 
-    await newRegistration.save();
-
-    // Add new member to parent's children array
-    parentMember.children.push({
-      memberId,
-      registrationId: newRegistration._id,
-    });
-    await parentMember.save();
+    await updateSponsorAndPlacementMembers(
+      sponsorMember,
+      placedUnderMember,
+      newAgent
+    );
 
     const updatedTree = await updateSection(
-      newRegistration.treeName,
-      newRegistration.applicantPlacementLevel
+      newAgent.treeName,
+      newAgent.applicantPlacementLevel
     );
+
+    const commission = await distributeCommissions(newAgent);
 
     res.status(201).json({
       message: "Registration successful",
-      data: newRegistration,
+      data: newAgent,
       tree: updatedTree,
+      payment: commission,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //get all
 const getAllAgents = async (req, res) => {
@@ -164,9 +98,14 @@ const getAllAgents = async (req, res) => {
       createdAt: member.createdAt,
       memberId: member.memberId,
       sponsorId: member.sponsorId,
+      placementId: member.placementId,
       joiningFee: member.joiningFee,
       status: member.status,
       isHead: member.isHead,
+      level:member.applicantPlacementLevel,
+      referralCommission: member.referralCommission,
+      treeName : member.treeName,
+      walletBalance:member.walletBalance
     }));
 
     const totalPages = Math.ceil(count / limit);
@@ -200,7 +139,78 @@ const agentPreview = async (req, res) => {
 };
 
 // for finding single sponser details
+
 const findSponser = async (req, res) => {
+  const memberId = req.params.memberId;
+
+  try {
+    const member = await Agent.findOne({ memberId });
+
+    if (!member) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    if (member.status === "Un Approved") {
+      return res.status(404).json({
+        error:
+          "This member has not been approved yet. Please contact an admin for approval.",
+      });
+    }
+
+    const { name, sponsorPlacementLevel, applicantPlacementLevel, children } =
+      member;
+
+    res.json({ name, applicantPlacementLevel });
+  } catch (error) {
+    console.error("Error finding member:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// const findSponser = async (req, res) => {
+//   const { memberId, placementId } = req.params;
+
+//   try {
+//     const member = await Agent.findOne({ memberId });
+
+//     if (!member) {
+//       return res.status(404).json({ error: "Member not found" });
+//     }
+
+//     if (member.status === "Un Approved") {
+//       return res.status(404).json({
+//         error:
+//           "This member has not been approved yet. Please contact an admin for approval.",
+//       });
+//     }
+
+//     const { name, sponsorPlacementLevel, applicantPlacementLevel, children } =
+//       member;
+
+//     // Find the placement based on the given placementId
+//     const placement = await Agent.findOne({ memberId: placementId });
+
+//     if (!placement) {
+//       return res.status(404).json({ error: "Placement not found" });
+//     }
+
+//     //collect all members from tree
+
+//     res.json({
+//       name,
+//       applicantPlacementLevel,
+//       placementId,
+//     });
+//   } catch (error) {
+//     console.error("Error finding member:", error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// };
+
+module.exports = { findSponser };
+
+// for find placement
+const findPlacement = async (req, res) => {
   const memberId = req.params.memberId;
 
   try {
@@ -224,7 +234,9 @@ const findSponser = async (req, res) => {
       return res.status(404).json({ error: "Max limit reached" });
     }
 
-    res.json({ name, sponsorPlacementLevel, applicantPlacementLevel });
+    const nextPlacement = applicantPlacementLevel + 1;
+
+    res.json({ name, applicantPlacementLevel, nextPlacement });
   } catch (error) {
     console.error("Error finding member:", error);
     res.status(500).json({ error: "Server error" });
@@ -517,4 +529,5 @@ module.exports = {
   getSponsorMember,
   buildDownTreeData,
   checkMobile,
+  findPlacement,
 };

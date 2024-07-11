@@ -51,9 +51,15 @@ const generateMemberID = async (treeName) => {
 
     if (lastRecord && lastRecord.memberId) {
       const lastMemberId = lastRecord.memberId;
-      const lastDigit = parseInt(lastMemberId.slice(-1), 10);
-      const newLastDigit = (lastDigit + 1) % 10;
-      const newMemberId = lastMemberId.slice(0, -1) + newLastDigit;
+      const numericPart = parseInt(lastMemberId.match(/\d+$/)[0], 10); // Extract numeric part
+      const incrementedPart = (numericPart + 1)
+        .toString()
+        .padStart(
+          lastMemberId.length - lastMemberId.match(/\D+/)[0].length,
+          "0"
+        ); // Increment and pad
+
+      const newMemberId = lastMemberId.replace(/\d+$/, incrementedPart); // Replace numeric part with incremented value
       return newMemberId;
     } else {
       throw new Error("No last record found or memberId is missing");

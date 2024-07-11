@@ -12,6 +12,7 @@ const {
   getSponsorMember,
   buildDownTreeData,
   checkMobile,
+  findPlacement,
 } = require("../controllers/agent");
 const { upload } = require("../middleware/multer");
 
@@ -25,6 +26,7 @@ router.post("/register", fileUpload, createAgent);
 router.get("/list", getAllAgents);
 router.get("/agent-preview/:memberId", agentPreview);
 router.get("/sponsor-member/:memberId", findSponser);
+router.get("/placement-member/:memberId", findPlacement);
 router.get("/check-phone/:phoneNumber", checkMobile);
 router.put("/update-status/:id", updateStatus);
 router.get("/tree-node-tree/:memberId", buildTreeData);

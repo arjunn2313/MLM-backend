@@ -11,6 +11,8 @@ const section = require("./routes/tree");
 const agent = require("./routes/agent");
 const payout = require("./routes/payout");
 const settings = require("./routes/settings");
+const login = require("./routes/login");
+const { authenticateToken } = require("./utils/jwt");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -35,12 +37,15 @@ mongoose.connection.on("connected", () => {
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+// app.use("/api", authenticateToken)
+app.use("/login",login);
 app.use("/api/member", register);
 app.use("/api/district", district);
 app.use("/api/section", section);
 app.use("/api/agent", agent);
 app.use("/api/pay", payout);
 app.use("/api/settings", settings);
+
 
 app.listen(6060, () => {
   connect();

@@ -1,7 +1,7 @@
 const {
   generateSectionId,
   generateHeadId,
-} = require("../middleware/idGenerator");
+} = require("../utils/idGenerator");
 const District = require("../models/district");
 const Section = require("../models/section");
 const Agent = require("../models/agents");

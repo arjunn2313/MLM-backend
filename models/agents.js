@@ -9,10 +9,28 @@ const childSchema = new mongoose.Schema({
   },
 });
 
+const sponsoredChildSchema = new mongoose.Schema({
+  memberId: { type: String, required: true },
+  registrationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Agent",
+    required: true,
+  },
+});
+
+const sponsoredHeadSchema = new mongoose.Schema({
+  memberId: { type: String, required: true },
+  registrationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Agent",
+    required: true,
+  },
+});
+
 const commissionHistorySchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   date: { type: Date, default: Date.now },
-  description: { type: String }, // Optional: Add description for the commission payment
+  description: { type: String },
 });
 
 const agentSchema = new mongoose.Schema(
@@ -45,16 +63,17 @@ const agentSchema = new mongoose.Schema(
     relationshipWithNominee: { type: String, required: true },
     sponsorId: { type: String },
     sponsorName: { type: String },
-    sponsorPlacementLevel: { type: Number },
+    sponsorPlacementLevel: { type: Number, default: 0 },
     placementId: { type: String },
     placementName: { type: String },
-    placementPlacementLevel: { type: Number },
-    applicantPlacementLevel: { type: Number },
+    placementPlacementLevel: { type: Number, default: 0 },
+    applicantPlacementLevel: { type: Number, default: 0 },
     joiningFee: { type: Number, required: true },
     applicantPhoto: { type: String },
     applicantSign: { type: String },
     sponsorSign: { type: String },
     children: [childSchema],
+    sponsoredChildren: [sponsoredChildSchema],
     memberCreatedDate: { type: Date, default: Date.now },
     status: {
       type: String,
@@ -68,14 +87,19 @@ const agentSchema = new mongoose.Schema(
       default: "Unpaid",
       required: true,
     },
-    paymentMode: {
-      type: String,
-    },
+    paymentMode: { type: String },
     isHead: { type: Boolean, default: false, required: true },
     isPayed: { type: Boolean, default: false, required: true },
     referralCommission: { type: Number, default: 0 },
     walletBalance: { type: Number, default: 0 },
     commissionHistory: [commissionHistorySchema],
+    sponsorHeads: [sponsoredHeadSchema],
+    isUserAccount: { type: Boolean, default: false, required: true },
+    loginAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "login",
+      // required: true,
+    },
   },
   { timestamps: true }
 );
