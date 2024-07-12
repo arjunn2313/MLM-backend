@@ -12,8 +12,7 @@ const mobileVerification = async (req, res) => {
     const { context } = req.query;
 
     const isMember = await Agent.findOne({ phoneNumber });
-
-    console.log(isMember);
+ 
     if (!isMember) {
       return res.status(404).json({ message: "Member not found" });
     }
@@ -222,6 +221,7 @@ const logReqByOtp = async (req, res) => {
 const validateAndLogin = async (req, res) => {
   try {
     const { phoneNumber, otp } = req.body;
+    console.log(phoneNumber);
     const user = await UserAccount.findOne({
       phoneNumber,
       otp,
