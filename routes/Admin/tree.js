@@ -1,4 +1,8 @@
-const { createSection, sectionList, getSingleSection } = require("../../controllers/Admin/section");
+const {
+  createSection,
+  sectionList,
+  getSingleSection,
+} = require("../../controllers/Admin/section");
 const router = require("express").Router();
 const { upload } = require("../../middleware/multer");
 
@@ -10,7 +14,7 @@ const fileUpload = upload.fields([
 
 router.post("/create-head/:districtId", fileUpload, createSection);
 // router.post("/list/:district",);
-router.get("/list/:districtId",sectionList);
-router.get("/single-tree/:sectionId",getSingleSection)
+router.get("/list/:districtId", sectionList);
+router.get("/single-tree/:sectionId", getSingleSection);
 
 module.exports = router;

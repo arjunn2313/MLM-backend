@@ -8,11 +8,12 @@ const { generateAccessToken } = require("../utils/jwt");
 
 const mobileVerification = async (req, res) => {
   try {
-    const { mobileNumber } = req.body;
+    const { phoneNumber } = req.body;
     const { context } = req.query;
 
-    const isMember = await Agent.findOne({ mobileNumber });
+    const isMember = await Agent.findOne({ phoneNumber });
 
+    console.log(isMember);
     if (!isMember) {
       return res.status(404).json({ message: "Member not found" });
     }
@@ -47,14 +48,14 @@ const mobileVerification = async (req, res) => {
 //  Create acount
 const createAccount = async (req, res) => {
   try {
-    const { mobileNumber, fullName, email, password } = req.body;
+    const { phoneNumber, fullName, email, password } = req.body;
 
-    if (!mobileNumber || !fullName || !email || !password) {
+    if (!phoneNumber || !fullName || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const isMember = await Agent.findOne({
-      phoneNumber: mobileNumber,
+      phoneNumber,
       isUserAccount: false,
     });
 
@@ -65,7 +66,7 @@ const createAccount = async (req, res) => {
     }
 
     const existingUser = await UserAccount.findOne({
-      mobileNumber,
+      phoneNumber,
       isVerified: false,
     });
 
@@ -100,7 +101,7 @@ const createAccount = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new UserAccount({
-      mobileNumber,
+      phoneNumber,
       fullName,
       email,
       password: hashedPassword,
@@ -123,17 +124,17 @@ const createAccount = async (req, res) => {
 // Validate OTP
 const validateOTP = async (req, res) => {
   try {
-    const { mobileNumber, otp } = req.body;
+    const { phoneNumber, otp } = req.body;
 
     const user = await UserAccount.findOne({
-      mobileNumber,
+      phoneNumber,
       otp,
       otpExpiry: { $gt: Date.now() },
       isVerified: false,
     });
 
     const agent = await Agent.findOne({
-      phoneNumber: mobileNumber,
+      phoneNumber,
       isUserAccount: false,
     });
 
@@ -167,9 +168,9 @@ const validateOTP = async (req, res) => {
 // login by password
 const loginReqByPass = async (req, res) => {
   try {
-    const { mobileNumber, password } = req.body;
+    const { phoneNumber, password } = req.body;
 
-    const user = await UserAccount.findOne({ mobileNumber, isVerified: true });
+    const user = await UserAccount.findOne({ phoneNumber, isVerified: true });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -192,10 +193,10 @@ const loginReqByPass = async (req, res) => {
 // login req otp
 const logReqByOtp = async (req, res) => {
   try {
-    const { mobileNumber } = req.body;
-    const user = await UserAccount.findOne({ mobileNumber, isVerified: true });
+    const { phoneNumber } = req.body;
+    const user = await UserAccount.findOne({ phoneNumber, isVerified: true });
 
-    console.log(mobileNumber);
+    console.log(phoneNumber);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -220,9 +221,9 @@ const logReqByOtp = async (req, res) => {
 // validate otp and login
 const validateAndLogin = async (req, res) => {
   try {
-    const { mobileNumber, otp } = req.body;
+    const { phoneNumber, otp } = req.body;
     const user = await UserAccount.findOne({
-      mobileNumber,
+      phoneNumber,
       otp,
       otpExpiry: { $gt: Date.now() },
       isVerified: true,

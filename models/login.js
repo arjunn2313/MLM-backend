@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const loginSchema = new Schema({
   fullName: { type: String, required: true },
-  mobileNumber: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ["admin", "head", "agent"], required: true },
