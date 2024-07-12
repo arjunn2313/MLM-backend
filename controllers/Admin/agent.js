@@ -4,16 +4,16 @@ const {
   validatePlacementChildrenLimit,
   createAndSaveAgent,
   updateSponsorAndPlacementMembers,
-} = require("../services/agentServices");
-const { distributeCommissions } = require("../utils/Calculation");
-const { generateMemberID } = require("../utils/idGenerator");
-const { updateSection } = require("../utils/levelsManager");
+} = require("../../services/agentServices");
+const { distributeCommissions } = require("../../utils/Calculation");
+const { generateMemberID } = require("../../utils/idGenerator");
+const { updateSection } = require("../../utils/levelsManager");
 const {
   buildNode,
   sponserBuildNode,
   downlineBuildNode,
-} = require("../utils/nodeTreeGenerator");
-const Agent = require("../models/agents");
+} = require("../../utils/nodeTreeGenerator");
+const Agent = require("../../models/agents");
 
 //create
 

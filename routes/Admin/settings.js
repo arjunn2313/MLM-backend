@@ -1,4 +1,4 @@
-const { getSettings, updateSettings, deleteLevel } = require("../controllers/settings")
+const { getSettings, updateSettings, deleteLevel } = require("../../controllers/Admin/settings")
 
 const router = require("express").Router()
 

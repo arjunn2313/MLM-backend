@@ -1,10 +1,10 @@
 const {
   generateSectionId,
   generateHeadId,
-} = require("../utils/idGenerator");
-const District = require("../models/district");
-const Section = require("../models/section");
-const Agent = require("../models/agents");
+} = require("../../utils/idGenerator");
+const District = require("../../models/district");
+const Section = require("../../models/section");
+const Agent = require("../../models/agents");
 
 // create section and head
 const createSection = async (req, res) => {

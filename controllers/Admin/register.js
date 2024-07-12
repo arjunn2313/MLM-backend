@@ -1,4 +1,4 @@
-const Registration = require("../models/member");
+const Registration = require("../../models/member");
 
 // Function to generate a unique member ID
 const generateMemberID = async () => {

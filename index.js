@@ -5,14 +5,14 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
-const register = require("./routes/register");
-const district = require("./routes/district");
-const section = require("./routes/tree");
-const agent = require("./routes/agent");
-const payout = require("./routes/payout");
-const settings = require("./routes/settings");
-const login = require("./routes/login");
+
 const { authenticateToken } = require("./utils/jwt");
+const login = require("./routes/login");
+const register = require("./routes/Admin/register");
+const district = require("./routes/Admin/district");
+const agent = require("./routes/Admin/agent");
+const payout = require("./routes/Admin/payout");
+const settings = require("./routes/Admin/settings");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -37,15 +37,16 @@ mongoose.connection.on("connected", () => {
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-// app.use("/api", authenticateToken)
-app.use("/login",login);
-app.use("/api/member", register);
-app.use("/api/district", district);
-app.use("/api/section", section);
-app.use("/api/agent", agent);
-app.use("/api/pay", payout);
-app.use("/api/settings", settings);
 
+// Routes
+
+app.use("/login", login);
+app.use("/api", authenticateToken);
+// Admin Routes
+app.use("/api/admin/district", district);
+app.use("/api/admin/agent", agent);
+app.use("/api/admin/pay", payout);
+app.use("/api/admin/settings", settings);
 
 app.listen(6060, () => {
   connect();

@@ -1,6 +1,6 @@
-const { createSection, sectionList, getSingleSection } = require("../controllers/section");
+const { createSection, sectionList, getSingleSection } = require("../../controllers/Admin/section");
 const router = require("express").Router();
-const { upload } = require("../middleware/multer");
+const { upload } = require("../../middleware/multer");
 
 const fileUpload = upload.fields([
   { name: "applicantPhoto", maxCount: 1 },

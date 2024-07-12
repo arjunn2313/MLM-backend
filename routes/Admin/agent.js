@@ -1,20 +1,7 @@
 const router = require("express").Router();
-const {
-  createAgent,
-  getAllAgents,
-  agentPreview,
-  findSponser,
-  updateStatus,
-  buildTreeData,
-  getDownlineMember,
-  getAlltreeMember,
-  buildSponsorTreeData,
-  getSponsorMember,
-  buildDownTreeData,
-  checkMobile,
-  findPlacement,
-} = require("../controllers/agent");
-const { upload } = require("../middleware/multer");
+ 
+const { createAgent, getAllAgents, agentPreview, findSponser, findPlacement, checkMobile, updateStatus, buildTreeData, buildSponsorTreeData, buildDownTreeData, getDownlineMember, getAlltreeMember, getSponsorMember } = require("../../controllers/Admin/agent");
+const { upload } = require("../../middleware/multer");
 
 const fileUpload = upload.fields([
   { name: "applicantPhoto", maxCount: 1 },

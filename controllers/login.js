@@ -195,6 +195,8 @@ const logReqByOtp = async (req, res) => {
     const { mobileNumber } = req.body;
     const user = await UserAccount.findOne({ mobileNumber, isVerified: true });
 
+    console.log(mobileNumber);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

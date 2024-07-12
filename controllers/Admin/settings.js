@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Settings = require("../models/settings");
+const Settings = require("../../models/settings");
 
 // Get the current settings
 const getSettings = async (req, res) => {
