@@ -13,6 +13,7 @@ const district = require("./routes/Admin/district");
 const agent = require("./routes/Admin/agent");
 const payout = require("./routes/Admin/payout");
 const settings = require("./routes/Admin/settings");
+const section = require("./routes/Admin/tree");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -41,12 +42,13 @@ app.use(bodyParser.json());
 // Routes
 
 app.use("/login", login);
-app.use("/api", authenticateToken);
+// app.use("/api", authenticateToken);
 // Admin Routes
 app.use("/api/admin/district", district);
 app.use("/api/admin/agent", agent);
 app.use("/api/admin/pay", payout);
 app.use("/api/admin/settings", settings);
+app.use("/api/admin/section", section);
 
 app.listen(6060, () => {
   connect();

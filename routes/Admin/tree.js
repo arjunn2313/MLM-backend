@@ -9,7 +9,7 @@ const fileUpload = upload.fields([
 ]);
 
 router.post("/create-head/:districtId", fileUpload, createSection);
-router.post("/list/:district");
+// router.post("/list/:district",);
 router.get("/list/:districtId",sectionList);
 router.get("/single-tree/:sectionId",getSingleSection)
 

@@ -1,4 +1,4 @@
-const District = require("../../models/agents");
+const District = require("../../models/district");
 
 const createDistrict = async (req, res) => {
   try {
