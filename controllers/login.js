@@ -12,7 +12,7 @@ const mobileVerification = async (req, res) => {
     const { context } = req.query;
 
     const isMember = await Agent.findOne({ phoneNumber });
- 
+
     if (!isMember) {
       return res.status(404).json({ message: "Member not found" });
     }
@@ -241,6 +241,61 @@ const validateAndLogin = async (req, res) => {
   }
 };
 
+// Generate OTP for password reset
+const forgotPassword = async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+
+    const user = await UserAccount.findOne({ phoneNumber });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      specialChars: false,
+      lowerCaseAlphabets: false,
+    });
+
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 1800000;
+    await user.save();
+
+    res.status(200).json({ message: "OTP sent successfully", otp });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error generating OTP" });
+  }
+};
+
+// Validate OTP and reset password
+const resetPassword = async (req, res) => {
+  try {
+    const { phoneNumber, otp, newPassword } = req.body;
+
+    const user = await UserAccount.findOne({
+      phoneNumber,
+      otp,
+      otpExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid OTP or OTP expired" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error resetting password" });
+  }
+};
+
 module.exports = {
   mobileVerification,
   createAccount,
@@ -248,4 +303,6 @@ module.exports = {
   loginReqByPass,
   logReqByOtp,
   validateAndLogin,
+  forgotPassword,
+  resetPassword,
 };
