@@ -15,6 +15,8 @@ const createSection = async (req, res) => {
       parentName,
       relation,
       phoneNumber,
+      whatsAppNumber,
+      occupation,
       dateOfBirth,
       gender,
       maritalStatus,
@@ -22,6 +24,8 @@ const createSection = async (req, res) => {
       accountNumber,
       ifscCode,
       bankName,
+      branchName,
+      aadharNumber,
       address,
       city,
       district,
@@ -65,6 +69,8 @@ const createSection = async (req, res) => {
       parentName,
       relation,
       phoneNumber,
+      whatsAppNumber,
+      occupation,
       dateOfBirth,
       gender,
       maritalStatus,
@@ -72,6 +78,8 @@ const createSection = async (req, res) => {
       accountNumber,
       ifscCode,
       bankName,
+      branchName,
+      aadharNumber,
       address,
       city,
       district,
@@ -86,9 +94,9 @@ const createSection = async (req, res) => {
       applicantPhoto: req.files["applicantPhoto"]
         ? req.files["applicantPhoto"][0].path
         : null,
-      applicantSign: req.files["applicantSign"]
-        ? req.files["applicantSign"][0].path
-        : null,
+      // applicantSign: req.files["applicantSign"]
+      //   ? req.files["applicantSign"][0].path
+      //   : null,
     });
 
     await newHeadRegistration.save();

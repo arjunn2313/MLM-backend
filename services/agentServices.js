@@ -39,15 +39,16 @@ const createAndSaveAgent = async (
     phoneNumber: req.body.phoneNumber,
     placementId,
     sponsorId,
+    applicantPhoto: req.body.applicantPhoto,
     applicantPhoto: req.files["applicantPhoto"]
       ? req.files["applicantPhoto"][0].path
       : null,
-    applicantSign: req.files["applicantSign"]
-      ? req.files["applicantSign"][0].path
-      : null,
-    sponsorSign: req.files["sponsorSign"]
-      ? req.files["sponsorSign"][0].path
-      : null,
+    // applicantSign: req.files["applicantSign"]
+    //   ? req.files["applicantSign"][0].path
+    //   : null,
+    // sponsorSign: req.files["sponsorSign"]
+    //   ? req.files["sponsorSign"][0].path
+    //   : null,
     ...details,
   });
 

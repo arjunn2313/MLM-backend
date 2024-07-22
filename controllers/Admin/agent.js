@@ -18,6 +18,7 @@ const Agent = require("../../models/agents");
 //create
 
 const createAgent = async (req, res) => {
+  console.log(req.body);
   try {
     const { placementId, sponsorId, phoneNumber, ...details } = req.body;
 
@@ -102,10 +103,10 @@ const getAllAgents = async (req, res) => {
       joiningFee: member.joiningFee,
       status: member.status,
       isHead: member.isHead,
-      level:member.applicantPlacementLevel,
+      level: member.applicantPlacementLevel,
       referralCommission: member.referralCommission,
-      treeName : member.treeName,
-      walletBalance:member.walletBalance
+      treeName: member.treeName,
+      walletBalance: member.walletBalance,
     }));
 
     const totalPages = Math.ceil(count / limit);
@@ -428,6 +429,121 @@ const getDownlineMember = async (req, res) => {
   }
 };
 
+// get incomplete for selected sectetion
+
+const incompleteMember = async (req, res) => {
+  try {
+    const { treeName } = req.params;
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    const searchRegex = new RegExp(search, "i");
+
+    const getMembers = await Agent.find({
+      treeName,
+      isHead: false,
+      $expr: { $lt: [{ $size: "$children" }, 5] },
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { placementId: { $regex: searchRegex } },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const totalMembers = await Agent.countDocuments({
+      treeName,
+      isHead: false,
+      $expr: { $lt: [{ $size: "$children" }, 5] },
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { sponsorId: { $regex: searchRegex } },
+      ],
+    });
+
+    const totalPages = Math.ceil(totalMembers / limit);
+
+    const filterDetails = getMembers.map((member) => ({
+      name: member.name,
+      level: member.applicantPlacementLevel,
+      createdAt: member.createdAt,
+      memberId: member.memberId,
+      placementId: member.placementId,
+      status: member.status,
+      children: member.children,
+    }));
+
+    res.status(201).json({
+      members: filterDetails,
+      totalPages,
+      currentPage: Number(page),
+      totalMembers,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// get complete for selected sectetion
+const completedMember = async (req, res) => {
+  try {
+    const { treeName } = req.params;
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    const searchRegex = new RegExp(search, "i");
+
+    // Find members with children array length exactly 5 and matching search criteria
+    const getMembers = await Agent.find({
+      treeName,
+      isHead: false,
+      children: { $size: 5 },
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { placementId: { $regex: searchRegex } },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const totalMembers = await Agent.countDocuments({
+      treeName,
+      isHead: false,
+      children: { $size: 5 },
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { sponsorId: { $regex: searchRegex } },
+      ],
+    });
+
+    const totalPages = Math.ceil(totalMembers / limit);
+
+    const filterDetails = getMembers.map((member) => ({
+      name: member.name,
+      level: member.applicantPlacementLevel,
+      createdAt: member.createdAt,
+      memberId: member.memberId,
+      placementId: member.placementId,
+      status: member.status,
+      children: member.children,
+    }));
+
+    res.status(201).json({
+      members: filterDetails,
+      totalPages,
+      currentPage: Number(page),
+      totalMembers,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 // get  all members for selected sectetion
 
 const getAlltreeMember = async (req, res) => {
@@ -530,4 +646,6 @@ module.exports = {
   buildDownTreeData,
   checkMobile,
   findPlacement,
+  incompleteMember,
+  completedMember
 };

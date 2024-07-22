@@ -1,6 +1,6 @@
 const router = require("express").Router();
  
-const { createAgent, getAllAgents, agentPreview, findSponser, findPlacement, checkMobile, updateStatus, buildTreeData, buildSponsorTreeData, buildDownTreeData, getDownlineMember, getAlltreeMember, getSponsorMember } = require("../../controllers/Admin/agent");
+const { createAgent, getAllAgents, agentPreview, findSponser, findPlacement, checkMobile, updateStatus, buildTreeData, buildSponsorTreeData, buildDownTreeData, getDownlineMember, getAlltreeMember, getSponsorMember, incompleteMember, completedMember } = require("../../controllers/Admin/agent");
 const { upload } = require("../../middleware/multer");
 
 const fileUpload = upload.fields([
@@ -22,5 +22,11 @@ router.get("/downline-node-tree/:memberId", buildDownTreeData);
 router.get("/downline-members/:treeName", getDownlineMember);
 router.get("/all-tree-members/:treeName", getAlltreeMember);
 router.get("/sponsor-downline-members/:treeName", getSponsorMember);
+
+
+// Incomplete Tree
+router.get("/incomplete-members/:treeName", incompleteMember);
+router.get("/completed-members/:treeName", completedMember);
+ 
 
 module.exports = router;
