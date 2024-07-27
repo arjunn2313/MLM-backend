@@ -14,6 +14,7 @@ const agent = require("./routes/Admin/agent");
 const payout = require("./routes/Admin/payout");
 const settings = require("./routes/Admin/settings");
 const section = require("./routes/Admin/tree");
+const Levels = require("./routes/Admin/levelsTracker");
 const User = require("./routes/Agent/Register");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -51,6 +52,12 @@ app.use("/api/admin/agent", authenticateToken, checkRole("admin"), agent);
 app.use("/api/admin/pay", payout);
 app.use("/api/admin/settings", settings);
 app.use("/api/admin/section", authenticateToken, checkRole("admin"), section);
+app.use(
+  "/api/admin/levels-tracker",
+  authenticateToken,
+  checkRole("admin"),
+  Levels
+);
 
 // agent
 app.use("/api/agent", authenticateToken, checkRole("agent"), User);
