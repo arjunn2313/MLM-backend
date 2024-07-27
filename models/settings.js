@@ -6,7 +6,7 @@ const levelCommissionSchema = new mongoose.Schema({
 });
 
 const settingsSchema = new mongoose.Schema({
-  referralCommission: { type: Number},
+  joiningFee: { type: Number},
   levelCommissions: [levelCommissionSchema],
 }, { timestamps: true });
 

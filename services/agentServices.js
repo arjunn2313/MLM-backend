@@ -30,27 +30,27 @@ const createAndSaveAgent = async (
   sponsorMember,
   placementId,
   sponsorId,
+  placedUnderMember,
   details
 ) => {
   const newAgent = new Agent({
     memberId,
     treeName: sponsorMember.treeName,
     sectionId: sponsorMember.sectionId,
+    districtId:sponsorMember.districtId,
     phoneNumber: req.body.phoneNumber,
+    sponsorName: sponsorMember.name,
+    applicantPlacementLevel:placedUnderMember.applicantPlacementLevel + 1,
     placementId,
     sponsorId,
     applicantPhoto: req.body.applicantPhoto,
     applicantPhoto: req.files["applicantPhoto"]
       ? req.files["applicantPhoto"][0].path
       : null,
-    // applicantSign: req.files["applicantSign"]
-    //   ? req.files["applicantSign"][0].path
-    //   : null,
-    // sponsorSign: req.files["sponsorSign"]
-    //   ? req.files["sponsorSign"][0].path
-    //   : null,
     ...details,
   });
+
+  console.log(newAgent);
 
   if (sponsorId === placementId) {
     let currentSponsor = await Agent.findOne({ memberId: sponsorId });

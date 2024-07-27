@@ -38,7 +38,16 @@ const agentSchema = new mongoose.Schema(
     memberId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     treeName: { type: String, required: true },
-    sectionId: { type: String, required: true },
+    sectionId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Section",
+      // required: true,
+    },
+    districtId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "District",
+      required: true,
+    },
     parentName: { type: String, required: true },
     relation: { type: String, required: true },
     phoneNumber: { type: String, required: true, unique: true },

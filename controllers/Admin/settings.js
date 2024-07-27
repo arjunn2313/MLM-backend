@@ -11,15 +11,15 @@ const getSettings = async (req, res) => {
 // update
 const updateSettings = async (req, res) => {
   try {
-    const { referralCommission, levelCommissions } = req.body;
+    const { joiningFee, levelCommissions } = req.body;
 
     console.log("Request body:", req.body);
 
     // Validate referralCommission
-    if (typeof referralCommission !== "number") {
-      console.log("Invalid referralCommission:", referralCommission);
+    if (typeof joiningFee !== "number") {
+      console.log("Invalid referralCommission:", joiningFee);
       return res.status(400).json({
-        message: "Invalid referralCommission, it must be a number",
+        message: "Invalid joiningFee, it must be a number",
       });
     }
 
@@ -37,7 +37,7 @@ const updateSettings = async (req, res) => {
       settings = new Settings();
     }
 
-    settings.referralCommission = referralCommission;
+    settings.joiningFee = joiningFee;
     settings.levelCommissions = levelCommissions;
     await settings.save();
 

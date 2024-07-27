@@ -1,3 +1,4 @@
+const { createAdmin, adminLogin } = require("../controllers/Admin/login");
 const {
   mobileVerification,
   createAccount,
@@ -8,6 +9,8 @@ const {
 } = require("../controllers/login");
 
 const router = require("express").Router();
+
+// user
 
 // Create account
 router.post("/user/mobileverification", mobileVerification);
@@ -24,5 +27,9 @@ router.post("/user/login-otp-validate", validateAndLogin);
 // forget password and reset
 router.post("/user/forget-password", logReqByOtp);
 router.post("/user/reset-password", validateAndLogin);
+
+//admin
+router.post("/admin/create", createAdmin);
+router.post("/admin/login-request", adminLogin);
 
 module.exports = router;

@@ -63,8 +63,8 @@ const createSection = async (req, res) => {
 
     const newHeadRegistration = new Agent({
       memberId: headId,
-      sectionId,
       name,
+      districtId: districtId,
       treeName,
       parentName,
       relation,
@@ -94,9 +94,6 @@ const createSection = async (req, res) => {
       applicantPhoto: req.files["applicantPhoto"]
         ? req.files["applicantPhoto"][0].path
         : null,
-      // applicantSign: req.files["applicantSign"]
-      //   ? req.files["applicantSign"][0].path
-      //   : null,
     });
 
     await newHeadRegistration.save();
@@ -111,6 +108,10 @@ const createSection = async (req, res) => {
     });
 
     await newSection.save();
+
+    newHeadRegistration.sectionId = newSection._id;
+
+    await newHeadRegistration.save();
 
     isDistrict.sections.push(newSection._id);
 

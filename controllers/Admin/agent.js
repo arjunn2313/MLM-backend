@@ -14,11 +14,12 @@ const {
   downlineBuildNode,
 } = require("../../utils/nodeTreeGenerator");
 const Agent = require("../../models/agents");
+const Section = require("../../models/section");
+const District = require("../../models/district");
 
 //create
 
 const createAgent = async (req, res) => {
-  console.log(req.body);
   try {
     const { placementId, sponsorId, phoneNumber, ...details } = req.body;
 
@@ -37,6 +38,7 @@ const createAgent = async (req, res) => {
       sponsorMember,
       placementId,
       sponsorId,
+      placedUnderMember,
       details
     );
 
@@ -62,6 +64,69 @@ const createAgent = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// update
+
+const updateAgent = async (req, res) => {
+  try {
+    const { memberId } = req.params;
+    const details = req.body;
+
+    // Validation
+    if (!memberId) {
+      return res.status(400).json({ message: "Member ID is required" });
+    }
+
+    const allowedFields = [
+      "name",
+      "dateOfBirth",
+      "gender",
+      "occupation",
+      "maritalStatus",
+      "panNumber",
+      "accountNumber",
+      "ifscCode",
+      "bankName",
+      "branchName",
+      "aadharNumber",
+      "address",
+      "city",
+      "district",
+      "state",
+      "zipCode",
+      "country",
+      "nameOfNominee",
+
+      "relationshipWithNominee",
+    ];
+
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (details[field] !== undefined) {
+        updateData[field] = details[field];
+      }
+    }
+
+    if (req.files && req.files["applicantPhoto"]) {
+      updateData.applicantPhoto = req.files["applicantPhoto"][0].path;
+    }
+
+    const existingAgent = await Agent.findOne({ memberId });
+
+    if (!existingAgent) {
+      return res.status(404).json({ message: "Agent not found" });
+    }
+
+    Object.assign(existingAgent, updateData);
+
+    await existingAgent.save();
+
+    res.status(200).json({ message: "Agent updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
@@ -131,8 +196,8 @@ const agentPreview = async (req, res) => {
     if (!member) {
       return res.status(404).json({ error: "Member not found" });
     }
-    const { children, ...others } = member.toObject();
-    res.status(200).json(others);
+    // const { children, ...others } = member.toObject();
+    res.status(200).json(member);
   } catch (error) {
     console.error("Error finding member:", error);
     res.status(500).json({ error: "Server error" });
@@ -317,9 +382,9 @@ const buildTreeData = async (req, res) => {
 const getSponsorMember = async (req, res) => {
   try {
     const { treeName } = req.params;
-    const { page = 1, limit = 10, search = "" } = req.query; // Default values: page 1, limit 10, empty search
+    const { page = 1, limit = 10, search = "" } = req.query;
 
-    const searchRegex = new RegExp(search, "i"); // Case-insensitive regex for search
+    const searchRegex = new RegExp(search, "i");
 
     const getMembers = await Agent.find({
       treeName,
@@ -357,6 +422,7 @@ const getSponsorMember = async (req, res) => {
       joiningFee: member.joiningFee,
       status: member.status,
       isHead: member.isHead,
+      placementId: member.placementId,
     }));
 
     res.status(201).json({
@@ -486,6 +552,146 @@ const incompleteMember = async (req, res) => {
   }
 };
 
+// get all incomplete for selected sectetion
+
+// const AllIncompleteMember = async (req, res) => {
+//   try {
+//     const { page = 1, limit = 10, search = "", } = req.query;
+
+//     const searchRegex = new RegExp(search, "i");
+
+//     const getMembers = await Agent.find({
+//       // isHead: false,
+//       $expr: { $lt: [{ $size: "$children" }, 5] },
+//       $or: [
+//         { name: { $regex: searchRegex } },
+//         { memberId: { $regex: searchRegex } },
+//         { placementId: { $regex: searchRegex } },
+//       ],
+//     })
+//       .populate("districtId", "name")
+//       .sort({ createdAt: -1 })
+//       .skip((page - 1) * limit)
+//       .limit(Number(limit));
+
+//     const totalMembers = await Agent.countDocuments({
+//       isHead: false,
+//       $expr: { $lt: [{ $size: "$children" }, 5] },
+//       $or: [
+//         { name: { $regex: searchRegex } },
+//         { memberId: { $regex: searchRegex } },
+//         { sponsorId: { $regex: searchRegex } },
+//       ],
+//     });
+
+//     const totalPages = Math.ceil(totalMembers / limit);
+
+//     const filterDetails = getMembers.map((member) => ({
+//       name: member.name,
+//       level: member.applicantPlacementLevel,
+//       createdAt: member.createdAt,
+//       memberId: member.memberId,
+//       placementId: member.placementId,
+//       status: member.status,
+//       children: member.children,
+//       districtName: member.districtId.name,
+//       treeName: member.treeName,
+//       isHead:member.isHead
+//     }));
+
+//     res.status(201).json({
+//       members: filterDetails,
+//       totalPages,
+//       currentPage: Number(page),
+//       totalMembers,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+const AllIncompleteMember = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      districtName,
+      sectionName,
+      level
+    } = req.query;
+
+    const searchRegex = new RegExp(search, "i");
+
+    // Build the query object
+    let query = {
+      $expr: { $lt: [{ $size: "$children" }, 5] },
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { placementId: { $regex: searchRegex } },
+      ],
+    };
+
+    // Add district filter if provided
+    if (districtName) {
+      const district = await District.findOne({ name: districtName });
+      if (district) {
+        query.districtId = district._id;
+      }
+    } 
+    if(level){
+      query.applicantPlacementLevel = level
+    }
+
+    // Add section filter if provided
+    if (sectionName) {
+      const section = await Section.findOne({ treeName: sectionName });
+      if (section) {
+        query.sectionId = section._id;
+      }
+    }
+
+    // Fetch members with the search criteria, pagination, and sorting
+    const getMembers = await Agent.find(query)
+      .populate("districtId", "name")
+      .populate("sectionId", "name") // Assuming sectionId is a reference field in Agent
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    // Fetch total member count matching the criteria for pagination
+    const totalMembers = await Agent.countDocuments(query);
+
+    const totalPages = Math.ceil(totalMembers / limit);
+
+    // Prepare the filtered member details
+    const filterDetails = getMembers.map((member) => ({
+      name: member.name,
+      level: member.applicantPlacementLevel,
+      createdAt: member.createdAt,
+      memberId: member.memberId,
+      placementId: member.placementId,
+      status: member.status,
+      children: member.children,
+      districtName: member.districtId.name,
+      sectionName: member.sectionId.name,
+      treeName: member.treeName,
+      isHead: member.isHead,
+    }));
+
+    // Send the response with the filtered details and pagination info
+    res.status(200).json({
+      members: filterDetails,
+      totalPages,
+      currentPage: Number(page),
+      totalMembers,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // get complete for selected sectetion
 const completedMember = async (req, res) => {
   try {
@@ -543,15 +749,99 @@ const completedMember = async (req, res) => {
   }
 };
 
+const AllCompleteMember = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      districtName,
+      sectionName,
+      level
+    } = req.query;
+
+    const searchRegex = new RegExp(search, "i");
+
+    // Build the query object
+    let query = {
+      $expr: { $eq: [{ $size: "$children" }, 5] },
+      $or: [
+        { name: { $regex: searchRegex } },
+        { memberId: { $regex: searchRegex } },
+        { placementId: { $regex: searchRegex } },
+      ],
+    };
+
+    // Add district filter if provided
+    if (districtName) {
+      const district = await District.findOne({ name: districtName });
+      if (district) {
+        query.districtId = district._id;
+      }
+    }
+
+    // Add level filter if provided
+    if (level) {
+      query.applicantPlacementLevel = level;
+    }
+
+    // Add section filter if provided
+    if (sectionName) {
+      const section = await Section.findOne({ treeName: sectionName });
+      if (section) {
+        query.sectionId = section._id;
+      }
+    }
+
+    // Fetch members with the search criteria, pagination, and sorting
+    const getMembers = await Agent.find(query)
+      .populate("districtId", "name")
+      .populate("sectionId", "name") // Assuming sectionId is a reference field in Agent
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    // Fetch total member count matching the criteria for pagination
+    const totalMembers = await Agent.countDocuments(query);
+
+    const totalPages = Math.ceil(totalMembers / limit);
+
+    // Prepare the filtered member details
+    const filterDetails = getMembers.map((member) => ({
+      name: member.name,
+      level: member.applicantPlacementLevel,
+      createdAt: member.createdAt,
+      memberId: member.memberId,
+      placementId: member.placementId,
+      status: member.status,
+      children: member.children,
+      districtName: member.districtId.name,
+      sectionName: member.sectionId.name,
+      treeName: member.treeName,
+      isHead: member.isHead,
+    }));
+
+    // Send the response with the filtered details and pagination info
+    res.status(200).json({
+      members: filterDetails,
+      totalPages,
+      currentPage: Number(page),
+      totalMembers,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 // get  all members for selected sectetion
 
 const getAlltreeMember = async (req, res) => {
   try {
     const { treeName } = req.params;
-    const { page = 1, limit = 10, search = "" } = req.query; // Default values: page 1, limit 10, empty search
+    const { page = 1, limit = 10, search = "" } = req.query;
 
-    const searchRegex = new RegExp(search, "i"); // Case-insensitive regex for search
+    const searchRegex = new RegExp(search, "i");
 
     const getMembers = await Agent.find({
       treeName,
@@ -582,6 +872,7 @@ const getAlltreeMember = async (req, res) => {
       createdAt: member.createdAt,
       memberId: member.memberId,
       sponsorId: member.sponsorId,
+      placementId: member.placementId,
       sponsorLevel: member.sponsorPlacementLevel,
       sponsorName: member.sponsorName,
       joiningFee: member.joiningFee,
@@ -617,7 +908,7 @@ const buildSponsorTreeData = async (req, res) => {
 };
 
 // linked node tree
-const buildDownTreeData = async (req, res) => {
+const incompleteTreeNode = async (req, res) => {
   const memberId = req.params.memberId;
 
   try {
@@ -632,6 +923,33 @@ const buildDownTreeData = async (req, res) => {
   }
 };
 
+const treeMemberFilter = async (req, res) => {
+  try {
+    const { districtName } = req.query;
+    let sectionNames = [];
+    let districtNames = [];
+
+    // Fetch all district names
+    const districts = await District.find({});
+    districtNames = districts.map((district) => district.name);
+
+    // If a districtName is provided, find the district and its sections
+    if (districtName) {
+      const district = await District.findOne({ name: districtName }).populate("sections");
+      if (district && district.sections) {
+        sectionNames = district.sections.map((section) => section.treeName); // Assuming section has a 'treeName' field
+      }
+    }
+
+    res.status(200).json({ sectionNames, districtNames });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+ 
+
+
 module.exports = {
   createAgent,
   getAllAgents,
@@ -643,9 +961,13 @@ module.exports = {
   getAlltreeMember,
   buildSponsorTreeData,
   getSponsorMember,
-  buildDownTreeData,
+  incompleteTreeNode,
   checkMobile,
   findPlacement,
   incompleteMember,
-  completedMember
+  completedMember,
+  updateAgent,
+  AllIncompleteMember,
+  treeMemberFilter,
+  AllCompleteMember
 };

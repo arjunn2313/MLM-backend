@@ -7,29 +7,49 @@ const generateAccessToken = (user) => {
     { userId: user._id, role: user.role },
     process.env.JWT_SECRET,
     {
-      expiresIn: "1h",
+      expiresIn: "8h",  
     }
   );
 };
 
-const authenticateToken = async (req, res, next) => {
+const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  // console.log("Authorization Header:", authHeader);
 
-  if (token == null) {
-    return res.sendStatus(401); // Unauthorized if no token provided
+  if (!authHeader) {
+    // console.error("No Authorization Header");
+    return res.sendStatus(401);
+  }
+
+  const token = authHeader.split(" ")[1];
+  // console.log("Token:", token);
+
+  if (!token) {
+    console.error("No Token Found");
+    return res.sendStatus(401);
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      return res.sendStatus(403); // Forbidden if token is invalid
+      console.error("JWT Verification Error:", err);
+      return res.sendStatus(403);
     }
     req.user = user;
-    next(); // Proceed to next middleware or route handler
+    next();
   });
+};
+
+const checkRole = (role) => {
+  return (req, res, next) => {
+    if (req.user.role !== role) {
+      return res.sendStatus(403);
+    }
+    next();
+  };
 };
 
 module.exports = {
   generateAccessToken,
   authenticateToken,
+  checkRole,
 };
