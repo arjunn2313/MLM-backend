@@ -1,7 +1,7 @@
-const express = require('express');
- const {createPayout} = require("../../controllers/Admin/payout")
-const router = express.Router();
+// const express = require('express');
+//  const {createPayout} = require("../../controllers/Admin/payout")
+// const router = express.Router();
 
-router.post('/create-payout',createPayout);
+// router.post('/create-payout',createPayout);
 
-module.exports = router;
+// module.exports = router;

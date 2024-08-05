@@ -8,14 +8,16 @@ require("dotenv").config();
 
 const { authenticateToken, checkRole } = require("./utils/jwt");
 const login = require("./routes/login");
+const Dashboard = require("./routes/Admin/dashBoard");
 const register = require("./routes/Admin/register");
 const district = require("./routes/Admin/district");
 const agent = require("./routes/Admin/agent");
-const payout = require("./routes/Admin/payout");
+// const payout = require("./routes/Admin/payout");
 const settings = require("./routes/Admin/settings");
 const section = require("./routes/Admin/tree");
 const Levels = require("./routes/Admin/levelsTracker");
 const User = require("./routes/Agent/Register");
+const Head = require("./routes/Admin/districtHead");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -46,12 +48,19 @@ app.use(bodyParser.json());
 app.use("/login", login);
 // app.use("/api", authenticateToken);
 
-// Admin Routes
+////////////////////////////Admin//////////////////////////////////////
+app.use("/api/admin/dashboard", authenticateToken, checkRole("admin"),Dashboard);
 app.use("/api/admin/district", authenticateToken, checkRole("admin"), district);
 app.use("/api/admin/agent", authenticateToken, checkRole("admin"), agent);
-app.use("/api/admin/pay", payout);
+// app.use("/api/admin/pay", payout);
 app.use("/api/admin/settings", settings);
-app.use("/api/admin/section", authenticateToken, checkRole("admin"), section);
+app.use("/api/admin/section",   section);
+app.use(
+  "/api/admin/district-head",
+  authenticateToken,
+  checkRole("admin"),
+  Head
+);
 app.use(
   "/api/admin/levels-tracker",
   authenticateToken,
@@ -59,7 +68,7 @@ app.use(
   Levels
 );
 
-// agent
+//////////////////////////////AGENT////////////////////////////////////////////
 app.use("/api/agent", authenticateToken, checkRole("agent"), User);
 
 app.listen(6060, () => {
