@@ -58,8 +58,6 @@ const getAllHeads = async (req, res) => {
     const districtName = req.query.districtName || "";
     const skip = (page - 1) * limit;
 
-     
-
     const query = {};
     if (search) {
       query.$or = [
@@ -125,7 +123,7 @@ const checkHeadMobile = async (req, res) => {
 
   try {
     const phone = await Head.findOne({ phoneNumber });
-  console.log("hi");
+    console.log("hi");
     if (phone) {
       return res
         .status(404)
@@ -138,4 +136,35 @@ const checkHeadMobile = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-module.exports = { createHead, getAllHeads, headPreview,checkHeadMobile };
+
+const checkHeadDistrict = async (req, res) => {
+  try {
+    // Fetch all districts
+    const allDistricts = await District.find({}, 'name');
+    
+    // Fetch all head district names
+    const headDistricts = await Head.find({}, 'districtName');
+
+    // Convert headDistricts to an array of district names for easier comparison
+    const headDistrictNames = headDistricts.map(head => head.districtName);
+
+    // Filter districts that do not have a matching district name in headDistrictNames
+    const availableDistricts = allDistricts
+      .filter(district => !headDistrictNames.includes(district.name))
+      .map(district => district.name); // Extract only the names
+
+    // Return the list of available district names as an array
+    res.status(200).json(availableDistricts);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+module.exports = {
+  createHead,
+  getAllHeads,
+  headPreview,
+  checkHeadMobile,
+  checkHeadDistrict,
+};

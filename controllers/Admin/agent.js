@@ -321,48 +321,6 @@ const findSponser = async (req, res) => {
   }
 };
 
-// const findSponser = async (req, res) => {
-//   const { memberId, placementId } = req.params;
-
-//   try {
-//     const member = await Agent.findOne({ memberId });
-
-//     if (!member) {
-//       return res.status(404).json({ error: "Member not found" });
-//     }
-
-//     if (member.status === "Un Approved") {
-//       return res.status(404).json({
-//         error:
-//           "This member has not been approved yet. Please contact an admin for approval.",
-//       });
-//     }
-
-//     const { name, sponsorPlacementLevel, applicantPlacementLevel, children } =
-//       member;
-
-//     // Find the placement based on the given placementId
-//     const placement = await Agent.findOne({ memberId: placementId });
-
-//     if (!placement) {
-//       return res.status(404).json({ error: "Placement not found" });
-//     }
-
-//     //collect all members from tree
-
-//     res.json({
-//       name,
-//       applicantPlacementLevel,
-//       placementId,
-//     });
-//   } catch (error) {
-//     console.error("Error finding member:", error);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// };
-
-module.exports = { findSponser };
-
 // for find placement
 const findPlacement = async (req, res) => {
   const memberId = req.params.memberId;
@@ -1097,42 +1055,6 @@ const incompleteTreeNode = async (req, res) => {
   }
 };
 
-// const treeMemberFilter = async (req, res) => {
-//   try {
-//     const { districtName, sectionName } = req.query;
-//     let sectionNames = [];
-//     let districtNames = [];
-
-//     if (!districtName && !sectionName) {
-//       // Fetch all districts and their sections
-//       const districts = await District.find({}).populate("sections");
-//       districtNames = districts.map(district => district.name);
-//       sectionNames = districts.flatMap(district =>
-//         district.sections.map(section => section.treeName) // Assuming section has a 'treeName' field
-//       );
-//     } else if (districtName) {
-//       // If a districtName is provided, find the district and its sections
-//       const district = await District.findOne({ name: districtName }).populate("sections");
-//       if (district && district.sections) {
-//         sectionNames = district.sections.map(section => section.treeName);
-//       }
-//       districtNames = [districtName];
-//     }
-//      else if (sectionName) {
-//       // If a sectionName is provided, find the section and its district
-//       const section = await Section.findOne({ treeName: sectionName}).populate("district");
-//       if (section && section.district) {
-//         districtNames = [section.district.name];
-//         sectionNames = [sectionName];
-//       }
-//     }
-
-//     res.status(200).json({ sectionNames, districtNames });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
 const treeMemberFilter = async (req, res) => {
   try {
     const { districtName } = req.query;
@@ -1166,6 +1088,32 @@ const treeMemberFilter = async (req, res) => {
   }
 };
 
+const downlineMembers = async (req, res) => {
+  try {
+    const { memberId } = req.params;
+
+ 
+    
+
+    // Find the agent by memberId and populate the children
+    const agent = await Agent.findOne({ memberId })
+      .populate({
+        path: "children.registrationId",
+        select: "name memberId applicantPhoto",
+      })
+      .exec();
+
+    if (!agent) {
+      return res.status(404).json({ message: "Agent not found." });
+    }
+
+    res.status(200).json(agent);
+  } catch (error) {
+    console.error("Error fetching downline members:", error);
+    res.status(500).json({ message: "An error occurred while fetching data." });
+  }
+};
+
 module.exports = {
   createAgent,
   getAllAgents,
@@ -1186,4 +1134,5 @@ module.exports = {
   AllIncompleteMember,
   treeMemberFilter,
   AllCompleteMember,
+  downlineMembers
 };

@@ -16,6 +16,7 @@ const {
   incompleteMember,
   completedMember,
   updateAgent,
+  downlineMembers,
 } = require("../../controllers/Admin/agent");
 const { upload } = require("../../middleware/multer");
 const { checkRole } = require("../../utils/jwt");
@@ -34,6 +35,10 @@ router.get("/placement-member/:memberId", findPlacement);
 router.get("/check-phone/:phoneNumber", checkMobile);
 router.put("/update-status/:id", updateStatus);
 router.put("/agent-update/:memberId",fileUpload, updateAgent);
+
+
+// downline children details
+router.get("/downline/:memberId",downlineMembers)
 
 
 module.exports = router;

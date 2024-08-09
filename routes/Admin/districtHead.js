@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { createHead, getAllHeads, headPreview, checkHeadMobile } = require("../../controllers/Admin/districtHead");
+const { createHead, getAllHeads, headPreview, checkHeadMobile, checkHeadDistrict } = require("../../controllers/Admin/districtHead");
 const { upload } = require("../../middleware/multer");
 
 const fileUpload = upload.fields([
@@ -12,5 +12,6 @@ router.post("/register", fileUpload, createHead);
 router.get("/list",getAllHeads);
 router.get("/head-preview/:memberId",headPreview);
 router.get("/check-phone/:phoneNumber",checkHeadMobile);
+router.get("/fetch-district-list",checkHeadDistrict);
 
 module.exports = router;
