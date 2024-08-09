@@ -111,7 +111,7 @@ const downlineBuildNode = async (memberId) => {
     .populate({
       path: "children.registrationId",
       select:
-        "memberId name createdAt phoneNumber sponsorId sponsorName applicantPlacementLevel",
+        "memberId name createdAt phoneNumber sponsorId sponsorName applicantPlacementLevel applicantPhoto",
     })
     .exec();
 
@@ -130,6 +130,7 @@ const downlineBuildNode = async (memberId) => {
     sponsorId: child.registrationId.sponsorId,
     sponsorName: child.registrationId.sponsorName,
     level: child.registrationId.applicantPlacementLevel,
+    photoUrl : child.registrationId.applicantPhoto,
   }));
 
   // Add placeholders for "Add" buttons
@@ -145,6 +146,7 @@ const downlineBuildNode = async (memberId) => {
     sponsorId: member.sponsorId,
     sponsorName: member.sponsorName,
     level: member.applicantPlacementLevel,
+    photoUrl:member.photoUrl,
     children,
   };
 };
